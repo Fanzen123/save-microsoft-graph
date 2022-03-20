@@ -13,4 +13,5 @@ public class Factory {
         mail.setContent(message.body.content);
         return mail;
     }
+
 }

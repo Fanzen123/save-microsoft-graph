@@ -2,6 +2,7 @@ package fr.lecko.actor;
 
 import com.microsoft.graph.models.User;
 import fr.lecko.contract.save_microsoft_graph.dto.Mail;
+import fr.lecko.dao.MailDao;
 import fr.lecko.dao.MongoDB;
 import fr.lecko.util.Authentication;
 import fr.lecko.util.Factory;
@@ -24,10 +25,10 @@ public class MailActor {
     private Logger logger = LoggerFactory.getLogger(MailActor.class);
 
     @Autowired
-    MongoDB mongoDB;
+    MailDao mailDao;
 
     public List<Mail> getMails() {
-        return mongoDB.getMails();
+        return mailDao.getMails();
     }
 
     public void save(String userMail) {
@@ -48,7 +49,9 @@ public class MailActor {
                     .select(VIEW_MAIL_PARAM).get().getCurrentPage()
                     .stream().forEach(message -> mails.add(Factory.createMail(message)));
 
-            mails.forEach(mail -> logger.info("Mail found : " + mail.getName()));
+            mails.forEach(mail -> logger.info("Mail found name : " + mail.getName()));
+
+            mailDao.insertMails(mails);
         });
     }
 
