@@ -2,6 +2,7 @@ package fr.lecko.api;
 
 import fr.lecko.AbstractTest;
 import junit.framework.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -16,6 +17,9 @@ import org.springframework.test.web.servlet.ResultActions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
+/**
+ * TODO add mock on endpoint (big dependency with api)
+ */
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -23,68 +27,65 @@ public class IntegrationTest extends AbstractTest {
 
     private Logger logger = LoggerFactory.getLogger(IntegrationTest.class);
 
-    private static final String URL = String.format("http://%s:%d", HOST, PORT);
+    private static final String URL_GET_MAIL = URL + "/mails";
+    private static final String URL_SAVE_MAILS = URL + "/save";
+    private static final String URL_INIT_CONNECTION = URL + "/init";
 
-    private static final String URL_ENTRY = "/save";
-    private static final String URL_GET_ENTRIES = URL + "/save";
+    private final String init_content = "{\"clientId\":\"dc516f84-9366-4edc-9c0a-8e038c26bd4b\"" +
+            ",\"clientSecret\":\"SvU7Q~FDgVcXIhDY6yDvplb6mfAQWX7yyuuBy\"," +
+            "\"tenant\":\"d5d99b8a-61b5-40bd-975a-923eca104608\"}";
 
-    @Test
-    public void shouldReturnHttpOkWhenGetEmails() throws Exception {
-        logger.info("GIVEN : an user want to get emails using the existing services available.");
-
-        logger.info(String.format("WHEN : an user request service by calling the service on endpoint %s", URL_GET_ENTRIES));
-        final ResultActions result = this.mockMvc.perform(get(URL_ENTRY).contentType(MediaType.APPLICATION_JSON));
-
-        logger.info("THEN : an http code 200 is returned");
+    @Before
+    public void before() throws Exception {
+        final ResultActions result = this.mockMvc.perform(post(URL_INIT_CONNECTION)
+                .content(init_content).contentType(MediaType.APPLICATION_JSON));
         Assert.assertEquals(HttpStatus.OK.value(), result.andReturn().getResponse().getStatus());
     }
 
     @Test
-    public void shouldReturnEmailsWhenGetEmails() throws Exception {
-        logger.info("GIVEN : an user want to get emails using the existing services available.");
+    public void shouldReturnHttpOkWhenGetMails() throws Exception {
+        logger.info("GIVEN : an user want to get mails using the existing services available.");
 
-        String expected = "[{\"name\":\"Example\",\"from\":\"Dupont\",\"content\":\"Bonjour, comment allez vous ? Cordialement\"," +
-                "\"date\":\"2022-03-17T19:18:00.064+01:00\"}]";
+        logger.info(String.format("WHEN : an user request on endpoint %s", URL_GET_MAIL));
+        final ResultActions result = this.mockMvc.perform(get(URL_GET_MAIL).contentType(MediaType.APPLICATION_JSON));
 
-        logger.info(String.format("WHEN : an user request service by calling the service on endpoint %s", URL_GET_ENTRIES));
-        final ResultActions result = this.mockMvc.perform(get(URL_ENTRY).contentType(MediaType.APPLICATION_JSON));
-
-        logger.info("THEN : emails returned");
-
-        Assert.assertEquals(expected, result.andReturn().getResponse().getContentAsString());
+        logger.info(String.format("THEN : an http code %d is returned.", HttpStatus.OK.value()));
+        Assert.assertEquals(HttpStatus.OK.value(), result.andReturn().getResponse().getStatus());
     }
 
     @Test
-    public void shouldReturnHttpCreatedWhenSaveEmails() throws Exception {
-        logger.info("GIVEN : an user want to save emails using the existing services available.");
-        final String request = "{\"clientId\":\"dc516f84-9366-4edc-9c0a-8e038c26bd4b\"" +
-                ",\"clientSecret\":\"SvU7Q~FDgVcXIhDY6yDvplb6mfAQWX7yyuuBy\"," +
-                "\"tenant\":\"d5d99b8a-61b5-40bd-975a-923eca104608\"}";
+    public void shouldReturnHttpCreatedWhenSaveMails() throws Exception {
+        logger.info("GIVEN : an user want to save mails using the existing services available.");
+        final String mail = "BrianJ@M365x762283.OnMicrosoft.com";
+        final String userMailParam = "userMail";
 
-        logger.info(String.format("WHEN : an user request service by calling the service on endpoint %s with content = %s", URL_GET_ENTRIES, request));
-        final ResultActions result = this.mockMvc.perform(post(URL_ENTRY).content(request).contentType(MediaType.APPLICATION_JSON));
+        logger.info(String.format("WHEN : an user request on endpoint %s", URL_SAVE_MAILS));
+        final ResultActions result =
+                this.mockMvc.perform(get(URL_SAVE_MAILS)
+                        .queryParam(userMailParam, mail)
+                        .contentType(MediaType.APPLICATION_JSON));
 
-        logger.info("THEN : an http code 201 is returned");
+        logger.info(String.format("THEN : an http code %d is returned.", HttpStatus.CREATED.value()));
         Assert.assertEquals(HttpStatus.CREATED.value(), result.andReturn().getResponse().getStatus());
-
     }
 
     @Test
-    public void shouldSaveEmails() throws Exception {
-        logger.info("GIVEN : an user want to save emails using the existing services available.");
-        final String request = "{\"clientId\":\"dc516f84-9366-4edc-9c0a-8e038c26bd4b\"" +
-                ",\"clientSecret\":\"SvU7Q~FDgVcXIhDY6yDvplb6mfAQWX7yyuuBy\"," +
-                "\"tenant\":\"d5d99b8a-61b5-40bd-975a-923eca104608\"}";
-        String expected = "[{\"name\":\"Example\",\"from\":\"Dupont\",\"content\":\"Bonjour, comment allez vous ? Cordialement\"," +
-                "\"date\":\"2022-03-17T19:18:00.064+01:00\"}]";
+    public void shouldSaveMails() throws Exception {
+        logger.info("GIVEN : an user want to save mails using the existing services available.");
+        String expected =
+                "[{\"name\":\"Example\",\"from\":\"Dupont\"," +
+                        "\"content\":\"Bonjour, comment allez vous ? Cordialement\"," +
+                        "\"date\":\"2022-03-17T19:18:00.064+01:00\"}]";
+        final String mail = "BrianJ@M365x762283.OnMicrosoft.com";
+        final String userMailParam = "userMail";
 
-        logger.info(String.format("WHEN : an user request service by calling the service on endpoint %s with content = %s", URL_GET_ENTRIES, request));
-        this.mockMvc.perform(post(URL_ENTRY).content(request).contentType(MediaType.APPLICATION_JSON));
+        logger.info(String.format("WHEN : an user request on endpoint %s", URL_SAVE_MAILS));
+        this.mockMvc.perform(get(URL_SAVE_MAILS)
+                        .queryParam(userMailParam, mail)
+                        .contentType(MediaType.APPLICATION_JSON));
+        ResultActions result = this.mockMvc.perform(get(URL_GET_MAIL).contentType(MediaType.APPLICATION_JSON));
 
-        ResultActions result = this.mockMvc.perform(get(URL_ENTRY).contentType(MediaType.APPLICATION_JSON));
-
-        logger.info("THEN : emails returned");
-
+        logger.info("THEN : mails must be saved");
         Assert.assertEquals(expected, result.andReturn().getResponse().getContentAsString());
     }
 }

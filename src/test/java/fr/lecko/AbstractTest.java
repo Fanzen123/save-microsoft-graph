@@ -8,4 +8,5 @@ public abstract class AbstractTest {
     protected MockMvc mockMvc;
     static protected final int PORT = 8980;
     static protected final String HOST = "localhost";
+    protected static final String URL = String.format("http://%s:%d", HOST, PORT);
 }

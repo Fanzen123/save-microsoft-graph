@@ -1,38 +1,38 @@
-package fr.lecko.actor;
+package fr.lecko.util;
 
 import com.azure.identity.ClientSecretCredential;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.microsoft.graph.authentication.TokenCredentialAuthProvider;
 import com.microsoft.graph.requests.GraphServiceClient;
-import com.microsoft.graph.requests.UserRequestBuilder;
 import fr.lecko.contract.save_microsoft_graph.dto.Credentials;
-import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
+import java.io.IOException;
+import java.util.Collections;
 
-@Component
-public class AuthenticationActor {
+public class Authentication {
 
-    public static final String SCOPE_EMAIL = "email";
+    public static final String MICROSOFT_COM_DEFAULT = "https://graph.microsoft.com/.default";
+    private static GraphServiceClient graphClient;
 
-    GraphServiceClient graphClient;
-
-    public void init(Credentials credentials) {
+    public static void init(Credentials credentials) throws IOException {
         final ClientSecretCredential clientSecretCredential = new ClientSecretCredentialBuilder()
                 .clientId(credentials.getClientId())
-                .clientSecret(credentials.getClientSecret())
                 .tenantId(credentials.getTenant())
+                .clientSecret(credentials.getClientSecret())
                 .build();
 
         final TokenCredentialAuthProvider tokenCredentialAuthProvider =
-                new TokenCredentialAuthProvider(Arrays.asList(SCOPE_EMAIL), clientSecretCredential);
+                new TokenCredentialAuthProvider(
+                        Collections.singletonList(MICROSOFT_COM_DEFAULT), clientSecretCredential);
 
-        graphClient = GraphServiceClient.builder()
+        graphClient = GraphServiceClient
+                .builder()
                 .authenticationProvider(tokenCredentialAuthProvider)
                 .buildClient();
     }
 
-    public UserRequestBuilder getUserRequestBuilder() {
-        return graphClient.me();
+    public static GraphServiceClient getGraphClient() {
+        return graphClient;
     }
+
 }

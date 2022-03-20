@@ -1,6 +1,6 @@
 package fr.lecko.dao;
 
-import fr.lecko.contract.save_microsoft_graph.dto.Email;
+import fr.lecko.contract.save_microsoft_graph.dto.Mail;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
@@ -10,26 +10,26 @@ import java.util.List;
 @Component
 public class MongoDB {
 
-    private List<Email> emails;
+    private List<Mail> mails;
 
     public MongoDB() {
-        emails = Arrays.asList(createEmail());
+        mails = Arrays.asList(createMail());
     }
 
-    private Email createEmail() {
-        Email email = new Email();
-        email.setName("Example");
-        email.setDate(OffsetDateTime.parse("2022-03-17T19:18:00.064+01:00"));
-        email.setFrom("Dupont");
-        email.setContent("Bonjour, comment allez vous ? Cordialement");
-        return email;
+    private Mail createMail() {
+        Mail mail = new Mail();
+        mail.setName("Example");
+        mail.setDate(OffsetDateTime.parse("2022-03-17T19:18:00.064+01:00"));
+        mail.setFrom("Dupont");
+        mail.setContent("Bonjour, comment allez vous ? Cordialement");
+        return mail;
     }
 
-    public List<Email> getEmails() {
-        return emails;
+    public List<Mail> getMails() {
+        return mails;
     }
 
-    public void setEmails(List<Email> emails) {
-        this.emails = emails;
+    public void setMails(List<Mail> mails) {
+        this.mails = mails;
     }
 }
