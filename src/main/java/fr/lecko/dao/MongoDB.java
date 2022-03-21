@@ -1,35 +1,87 @@
 package fr.lecko.dao;
 
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import fr.lecko.contract.save_microsoft_graph.dto.Mail;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.springframework.stereotype.Component;
 
-import java.time.OffsetDateTime;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class MongoDB {
+public class MongoDB implements MailDao {
 
-    private List<Mail> mails;
+    public static final String DATABASE = "Lecko";
+    public static final String COLLECTION = "Mail";
+    
+    // TODO SECURE THE PASSWORD
+    public static final String URI =
+            "mongodb+srv://lecko:lecko@demo.biqk0.mongodb.net/" +
+            "myFirstDatabase?retryWrites=true&w=majority";
+    public static final String NAME_FIELD = "_name";
+    public static final String DATE_FIELD = "_date";
+    public static final String CONTENT_FIELD = "_content";
+    public static final String FROM_FIELD = "_from";
+
+    private MongoClient mongoClient;
 
     public MongoDB() {
-        mails = Arrays.asList(createMail());
+        ConnectionString connectionString = new ConnectionString(URI);
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .applyConnectionString(connectionString)
+                .build();
+        mongoClient = MongoClients.create(settings);
     }
 
-    private Mail createMail() {
-        Mail mail = new Mail();
-        mail.setName("Example");
-        mail.setDate(OffsetDateTime.parse("2022-03-17T19:18:00.064+01:00"));
-        mail.setFrom("Dupont");
-        mail.setContent("Bonjour, comment allez vous ? Cordialement");
-        return mail;
+    @Override
+    public void insertMails(List<Mail> mails) {
+        MongoDatabase sampleTrainingDB = mongoClient.getDatabase(DATABASE);
+        MongoCollection<Document> mailCollection = sampleTrainingDB.getCollection(COLLECTION);
+        deleteAllEntries(sampleTrainingDB, mailCollection);
+        insertMailsIn(mails, mailCollection);
     }
 
+    @Override
     public List<Mail> getMails() {
+        List<Mail> mails = new ArrayList<>();
+        MongoDatabase database = mongoClient.getDatabase(DATABASE);
+        MongoCollection<Document> mailCollection = database.getCollection(COLLECTION);
+        mailCollection.find().forEach(document -> mails.add(map(document)));
         return mails;
     }
 
-    public void setMails(List<Mail> mails) {
-        this.mails = mails;
+    private void insertMailsIn(List<Mail> mails, MongoCollection<Document> mailCollection) {
+        List<Document> documents = new ArrayList<>();
+        mails.forEach(mail -> documents.add(createDocument(mail)));
+        mailCollection.insertMany(documents);
     }
+
+    private void deleteAllEntries(MongoDatabase sampleTrainingDB, MongoCollection<Document> mailCollection) {
+        mailCollection.drop();
+        sampleTrainingDB.createCollection(COLLECTION);
+    }
+
+    private Document createDocument(Mail mail) {
+        Document document = new Document("_id", new ObjectId());
+        document.append(NAME_FIELD, mail.getName());
+        document.append(DATE_FIELD, mail.getDate().toString());
+        document.append(CONTENT_FIELD, mail.getContent());
+        document.append(FROM_FIELD, mail.getFrom());
+        return document;
+    }
+
+    private Mail map(Document document) {
+        Mail mail = new Mail();
+        mail.setContent(document.getString(CONTENT_FIELD));
+        mail.setName(document.getString(NAME_FIELD));
+        mail.setFrom(document.getString(FROM_FIELD));
+        return mail;
+    }
+
 }
