@@ -49,8 +49,6 @@ public class MailActor {
                     .select(VIEW_MAIL_PARAM).get().getCurrentPage()
                     .stream().forEach(message -> mails.add(Factory.createMail(message)));
 
-            mails.forEach(mail -> logger.info("Mail found name : " + mail.getName()));
-
             mailDao.insertMails(mails);
         });
     }

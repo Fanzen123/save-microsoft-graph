@@ -19,6 +19,8 @@ public class MongoDB implements MailDao {
 
     public static final String DATABASE = "Lecko";
     public static final String COLLECTION = "Mail";
+    
+    // TODO SECURE THE PASSWORD
     public static final String URI =
             "mongodb+srv://lecko:lecko@demo.biqk0.mongodb.net/" +
             "myFirstDatabase?retryWrites=true&w=majority";
@@ -41,9 +43,8 @@ public class MongoDB implements MailDao {
     public void insertMails(List<Mail> mails) {
         MongoDatabase sampleTrainingDB = mongoClient.getDatabase(DATABASE);
         MongoCollection<Document> mailCollection = sampleTrainingDB.getCollection(COLLECTION);
-        List<Document> documents = new ArrayList<>();
-        mails.forEach(mail -> documents.add(createDocument(mail)));
-        mailCollection.insertMany(documents);
+        deleteAllEntries(sampleTrainingDB, mailCollection);
+        insertMailsIn(mails, mailCollection);
     }
 
     @Override
@@ -55,10 +56,21 @@ public class MongoDB implements MailDao {
         return mails;
     }
 
+    private void insertMailsIn(List<Mail> mails, MongoCollection<Document> mailCollection) {
+        List<Document> documents = new ArrayList<>();
+        mails.forEach(mail -> documents.add(createDocument(mail)));
+        mailCollection.insertMany(documents);
+    }
+
+    private void deleteAllEntries(MongoDatabase sampleTrainingDB, MongoCollection<Document> mailCollection) {
+        mailCollection.drop();
+        sampleTrainingDB.createCollection(COLLECTION);
+    }
+
     private Document createDocument(Mail mail) {
         Document document = new Document("_id", new ObjectId());
         document.append(NAME_FIELD, mail.getName());
-        document.append(DATE_FIELD, mail.getDate());
+        document.append(DATE_FIELD, mail.getDate().toString());
         document.append(CONTENT_FIELD, mail.getContent());
         document.append(FROM_FIELD, mail.getFrom());
         return document;
